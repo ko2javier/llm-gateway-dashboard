@@ -11,12 +11,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { GatewayService, ChatFailure } from './gateway.service';
 import { ChatMessage, DEGRADED_TEXT } from './gateway.models';
+import { I18nService } from './i18n/i18n.service';
 
-interface QuickExample {
-  label: string;
-  prompt: string;
-  icon: 'brain' | 'cloud' | 'gear';
-}
+// Fixed order, matched positionally against Dictionary.chat.examples in every locale.
+const EXAMPLE_ICONS: Array<'brain' | 'cloud' | 'gear'> = ['brain', 'cloud', 'gear'];
 
 @Component({
   selector: 'app-chat-panel',
@@ -31,14 +29,14 @@ interface QuickExample {
         <div class="flex items-center gap-2">
           <span class="font-mono text-base font-bold text-accent">$</span>
           <h2 class="text-sm font-semibold tracking-wide text-slate-100">
-            LLM Gateway · Chat
+            {{ i18n.t().chat.panelTitle }}
           </h2>
         </div>
         <span
           class="inline-flex items-center gap-1.5 rounded-md border border-accent/30 bg-accent/10 px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-widest text-accent"
         >
           <span class="h-1.5 w-1.5 rounded-full bg-accent shadow-[0_0_6px_rgba(74,222,128,0.9)]"></span>
-          groq · resilience4j
+          {{ i18n.t().chat.badge }}
         </span>
       </header>
 
@@ -53,10 +51,10 @@ interface QuickExample {
           class="flex h-full flex-col items-center justify-center gap-2 text-center"
         >
           <p class="font-mono text-sm text-slate-500">
-            // sin mensajes todavía
+            {{ i18n.t().chat.emptyTitle }}
           </p>
           <p class="text-xs text-slate-600">
-            Escribe un prompt o prueba un ejemplo rápido abajo.
+            {{ i18n.t().chat.emptySubtitle }}
           </p>
         </div>
 
@@ -110,7 +108,7 @@ interface QuickExample {
               <span
                 class="badge border-amber-500/50 bg-amber-500/10 text-amber-300"
               >
-                circuit breaker OPEN · fallback
+                {{ i18n.t().chat.degradedBadge }}
               </span>
             </div>
           </div>
@@ -148,11 +146,11 @@ interface QuickExample {
               (ngModelChange)="prompt.set($event)"
               (keydown.enter)="onEnter($event)"
               [disabled]="loading()"
-              placeholder="Escribe tu prompt…"
+              [placeholder]="i18n.t().chat.placeholder"
               class="w-full rounded-lg border border-edge bg-base px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-600 outline-none transition-colors focus:border-accent/70 focus:ring-1 focus:ring-accent/40 disabled:opacity-50"
             />
             <p *ngIf="showEmptyError()" class="mt-1.5 text-xs text-rose-400">
-              El prompt no puede estar vacío
+              {{ i18n.t().chat.emptyPromptError }}
             </p>
           </div>
 
@@ -162,7 +160,7 @@ interface QuickExample {
             [disabled]="!canSend()"
             class="inline-flex items-center gap-1.5 rounded-lg border border-accent bg-accent px-4 py-2.5 text-sm font-semibold text-base shadow-[0_0_16px_rgba(74,222,128,0.4)] transition-all hover:bg-accent-dim hover:shadow-[0_0_22px_rgba(74,222,128,0.55)] disabled:cursor-not-allowed disabled:border-edge disabled:bg-slate-800/60 disabled:text-slate-500 disabled:shadow-none"
           >
-            Enviar
+            {{ i18n.t().chat.send }}
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 14 0"/><path d="m13 6 6 6-6 6"/></svg>
           </button>
         </div>
@@ -173,7 +171,7 @@ interface QuickExample {
             for="maxTokens"
             class="font-mono text-[10px] uppercase tracking-widest text-slate-600"
           >
-            maxTokens
+            {{ i18n.t().chat.maxTokensLabel }}
           </label>
           <input
             id="maxTokens"
@@ -188,15 +186,15 @@ interface QuickExample {
         <!-- Quick examples -->
         <div class="mt-3 flex flex-wrap gap-2">
           <button
-            *ngFor="let ex of examples"
+            *ngFor="let ex of i18n.t().chat.examples; let idx = index"
             type="button"
-            (click)="runExample(ex)"
+            (click)="runExample(ex.prompt)"
             [disabled]="loading()"
             class="group inline-flex items-center gap-1.5 rounded-full border border-edge bg-base px-3 py-1.5 text-xs text-slate-300 transition-all hover:-translate-y-0.5 hover:border-accent/60 hover:bg-accent/5 hover:text-slate-100 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
           >
             <span class="text-slate-500 transition-colors group-hover:text-accent">
               <svg
-                *ngIf="ex.icon === 'brain'"
+                *ngIf="icons[idx] === 'brain'"
                 class="h-3.5 w-3.5"
                 viewBox="0 0 24 24"
                 fill="none"
@@ -210,7 +208,7 @@ interface QuickExample {
                 <path d="M12 5v14"/>
               </svg>
               <svg
-                *ngIf="ex.icon === 'cloud'"
+                *ngIf="icons[idx] === 'cloud'"
                 class="h-3.5 w-3.5"
                 viewBox="0 0 24 24"
                 fill="none"
@@ -223,7 +221,7 @@ interface QuickExample {
                 <path d="M17.5 19a4.5 4.5 0 0 0 0-9 6 6 0 0 0-11.6 1.5A3.5 3.5 0 0 0 6.5 19z"/>
               </svg>
               <svg
-                *ngIf="ex.icon === 'gear'"
+                *ngIf="icons[idx] === 'gear'"
                 class="h-3.5 w-3.5"
                 viewBox="0 0 24 24"
                 fill="none"
@@ -262,6 +260,7 @@ interface QuickExample {
 })
 export class ChatPanelComponent {
   private gateway = inject(GatewayService);
+  i18n = inject(I18nService);
 
   @ViewChild('scroll') private scrollRef?: ElementRef<HTMLDivElement>;
 
@@ -273,25 +272,7 @@ export class ChatPanelComponent {
   messages = signal<ChatMessage[]>([]);
   private nextId = 1;
 
-  examples: QuickExample[] = [
-    {
-      label: '¿Qué es un circuit breaker?',
-      icon: 'brain',
-      prompt:
-        'Explícame en 2 frases qué es un circuit breaker y por qué es útil en un gateway de LLMs.',
-    },
-    {
-      label: 'Clima en Madrid',
-      icon: 'cloud',
-      prompt: '¿Qué tiempo hace ahora en Madrid?',
-    },
-    {
-      label: 'Resilience4j vs manual',
-      icon: 'gear',
-      prompt:
-        'Resume en 2 frases las ventajas de Resilience4j frente a manejar reintentos manualmente.',
-    },
-  ];
+  icons = EXAMPLE_ICONS;
 
   canSend = computed(() => !this.loading() && this.prompt().trim().length > 0);
 
@@ -305,9 +286,9 @@ export class ChatPanelComponent {
     this.send();
   }
 
-  runExample(ex: QuickExample): void {
+  runExample(prompt: string): void {
     if (this.loading()) return;
-    this.prompt.set(ex.prompt);
+    this.prompt.set(prompt);
     this.send();
   }
 

@@ -10,6 +10,7 @@ import { CommonModule } from '@angular/common';
 import { Subscription, interval, startWith, switchMap } from 'rxjs';
 import { GatewayService } from './gateway.service';
 import { ResilienceInstance, StatusResponse } from './gateway.models';
+import { I18nService } from './i18n/i18n.service';
 
 interface CardView {
   key: string;
@@ -37,7 +38,7 @@ interface CardView {
             "
           ></span>
           <h2 class="text-xs font-semibold uppercase tracking-widest text-slate-400">
-            Resilience Status
+            {{ i18n.t().status.title }}
           </h2>
         </div>
         <span
@@ -45,7 +46,7 @@ interface CardView {
           [class.text-accent]="reachable()"
           [class.text-slate-600]="!reachable()"
         >
-          {{ reachable() ? 'live · 5s' : 'offline' }}
+          {{ reachable() ? i18n.t().status.live : i18n.t().status.offline }}
         </span>
       </header>
 
@@ -57,9 +58,7 @@ interface CardView {
         >
           <svg class="mt-0.5 h-4 w-4 shrink-0 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
           <p class="text-[11px] leading-relaxed text-amber-100/90">
-            Sin conexión con
-            <span class="font-mono text-amber-200">/api/v1/status</span>. El backend
-            puede no estar en marcha; los estados no están disponibles.
+            {{ i18n.t().status.offlineBanner }}
           </p>
         </div>
 
@@ -88,14 +87,14 @@ interface CardView {
                 class="font-mono text-[11px] font-semibold tracking-wide"
                 [ngClass]="stateText(card.data)"
               >
-                {{ card.data ? card.data.state : 'NO DISPONIBLE' }}
+                {{ card.data ? card.data.state : i18n.t().status.notAvailable }}
               </span>
             </div>
           </div>
 
           <dl class="mt-3 space-y-1.5 text-[11px]">
             <div class="flex items-center justify-between">
-              <dt class="text-slate-400">Failed calls</dt>
+              <dt class="text-slate-400">{{ i18n.t().status.failedCalls }}</dt>
               <dd
                 class="font-mono tabular-nums"
                 [class.text-rose-300]="card.data && card.data.failedCalls > 0"
@@ -105,13 +104,13 @@ interface CardView {
               </dd>
             </div>
             <div class="flex items-center justify-between">
-              <dt class="text-slate-400">Retry attempts</dt>
+              <dt class="text-slate-400">{{ i18n.t().status.retryAttempts }}</dt>
               <dd class="font-mono tabular-nums text-slate-300">
                 {{ card.data ? card.data.retryAttempts : '—' }}
               </dd>
             </div>
             <div class="flex items-center justify-between">
-              <dt class="text-slate-400">Buffered calls</dt>
+              <dt class="text-slate-400">{{ i18n.t().status.bufferedCalls }}</dt>
               <dd class="font-mono tabular-nums text-slate-400">
                 {{ card.data ? card.data.bufferedCalls : '—' }}
               </dd>
@@ -124,6 +123,7 @@ interface CardView {
 })
 export class StatusPanelComponent implements OnInit, OnDestroy {
   private gateway = inject(GatewayService);
+  i18n = inject(I18nService);
   private sub?: Subscription;
 
   reachable = signal(false);
