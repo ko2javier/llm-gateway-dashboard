@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background-color: #07090d;
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+.font-mono {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* thin custom scrollbar for terminal feel */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #1c2430;
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2a3646;
+}
+
+/* bouncing dots typing indicator */
+@keyframes v0-bounce {
+  0%,
+  80%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  40% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+.typing-dot {
+  animation: v0-bounce 1.2s infinite ease-in-out both;
+}
+.typing-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.typing-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
